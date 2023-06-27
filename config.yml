@@ -1,0 +1,8 @@
+repos:
+  - owner: sharkdp
+    name: fd
+  - owner: sharkdp
+    name: bat
+    force_tag: v0.22.1
+  - owner: lsd-rs
+    name: lsd
