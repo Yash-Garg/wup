@@ -6,15 +6,15 @@ use figment::{
     providers::{Format, Yaml},
     Figment,
 };
-use models::github::GithubRepo;
 use reqwest::header;
 
 use color_eyre::eyre::Result;
 use constants::APP_USER_AGENT;
 
-use crate::models::config::CliConfig;
+use crate::models::{config::CliConfig, github::GithubReleaseAsset};
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     color_eyre::install()?;
 
     let config: CliConfig = Figment::new()
@@ -24,12 +24,8 @@ fn main() -> Result<()> {
             panic!("Failed to load config.yml. Please make sure it exists and is valid YAML.");
         });
 
-    dbg!(config);
+    dbg!(&config);
 
-    Ok(())
-}
-
-async fn test_fetching_release() -> Result<(), Box<dyn std::error::Error>> {
     let mut headers = header::HeaderMap::new();
     headers.insert(
         header::ACCEPT,
@@ -41,16 +37,34 @@ async fn test_fetching_release() -> Result<(), Box<dyn std::error::Error>> {
         .default_headers(headers)
         .build()?;
 
-    let repo = GithubRepo {
-        owner: "sharkdp".to_string(),
-        name: "fd".to_string(),
-    };
+    for repo in &config.repos {
+        let result = repo.fetch_latest_release(&client).await?;
+        let mut filtered_assets = Vec::<GithubReleaseAsset>::new();
 
-    let result = repo.fetch_latest_release(&client).await?;
+        for asset in result.assets {
+            let asset_name = asset.name.to_lowercase();
 
-    for asset in result.assets {
-        println!("{}", asset.name);
+            if (asset_name.contains("windows")
+                || asset_name.contains(".exe")
+                || asset_name.contains(".msi"))
+                && (asset_name.contains("64")
+                    || asset_name.contains("x64")
+                    || asset_name.contains("x86_64"))
+                && !asset_name.contains("arm")
+            {
+                filtered_assets.push(asset);
+            }
+        }
+
+        if !filtered_assets.is_empty() {
+            let asset = filtered_assets
+                .iter()
+                .find(|asset| asset.name.contains("msvc"))
+                .unwrap_or_else(|| filtered_assets.first().unwrap());
+
+            asset.download(&client).await?;
+        }
     }
 
-    return Ok(());
+    Ok(())
 }

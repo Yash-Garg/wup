@@ -6,3 +6,11 @@ repos:
     force_tag: v0.22.1
   - owner: lsd-rs
     name: lsd
+  - owner: jqlang
+    name: jq
+  - owner: StackExchange
+    name: dnscontrol
+  - owner: junegunn
+    name: fzf
+  - owner: dandavison
+    name: delta
