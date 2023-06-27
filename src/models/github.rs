@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::constants::API_BASE_URL;
+
 #[derive(Deserialize, Debug)]
 pub struct GithubRepo {
     pub owner: String,
@@ -21,4 +23,21 @@ pub struct GithubReleaseAsset {
     pub node_id: String,
     pub name: String,
     pub browser_download_url: String,
+}
+
+impl GithubRepo {
+    pub async fn fetch_latest_release(
+        &self,
+        client: &reqwest::Client,
+    ) -> Result<GithubRelease, Box<dyn std::error::Error>> {
+        let request_url = format!(
+            "{}/repos/{}/{}/releases/latest",
+            API_BASE_URL, self.owner, self.name
+        );
+
+        let http_resp = client.get(&request_url).send().await?;
+        let response: GithubRelease = http_resp.json().await?;
+
+        return Ok(response);
+    }
 }
