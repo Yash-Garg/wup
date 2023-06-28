@@ -67,12 +67,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .find(|asset| asset.name.contains("msvc"))
                 .unwrap_or_else(|| filtered_assets.first().unwrap());
 
-            asset.download(&client).await.unwrap_or_else(|_| {
+            let file_path = asset.download(&client).await.unwrap_or_else(|_| {
                 panic!(
                     "Failed to download asset {} for {}/{}",
                     asset.name, repo.owner, repo.name
                 )
             });
+
+            dbg!(file_path);
         } else {
             eprintln!("No assets found for {}", repo.name);
         }

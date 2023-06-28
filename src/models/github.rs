@@ -1,5 +1,10 @@
 use serde::Deserialize;
-use std::{cmp::min, fs::File, io::Write};
+use std::{
+    cmp::min,
+    fs::{self, File},
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -28,7 +33,7 @@ pub struct GithubReleaseAsset {
 }
 
 impl GithubReleaseAsset {
-    pub async fn download(&self, client: &Client) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn download(&self, client: &Client) -> Result<PathBuf, Box<dyn std::error::Error>> {
         let response = client
             .get(&self.download_url)
             .send()
@@ -46,12 +51,13 @@ impl GithubReleaseAsset {
         ?.progress_chars("#>-"));
         pb.set_message(format!("Downloading {}", self.name));
 
-        if !std::path::Path::new("downloads").exists() {
+        if !Path::new("downloads").exists() {
             eprintln!("\"downloads\" directory does not exist. creating...");
             std::fs::create_dir("downloads")?;
         }
 
-        let mut file = File::create(format!("downloads/{}", self.name))?;
+        let path = Path::new("downloads").join(&self.name);
+        let mut file = File::create(&path)?;
         let mut downloaded: u64 = 0;
         let mut stream = response.bytes_stream();
 
@@ -76,6 +82,6 @@ impl GithubReleaseAsset {
         }
 
         pb.finish_with_message(format!("Downloaded {}", self.name));
-        Ok(())
+        Ok(fs::canonicalize(&path).unwrap_or_else(|_| path))
     }
 }
