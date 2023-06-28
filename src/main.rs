@@ -74,7 +74,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 )
             });
 
-            dbg!(file_path);
+            if asset.name.contains(".zip") {
+                asset.extract(&file_path, &repo.name)?;
+            }
         } else {
             eprintln!("No assets found for {}", repo.name);
         }

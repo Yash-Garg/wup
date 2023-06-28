@@ -84,4 +84,28 @@ impl GithubReleaseAsset {
         pb.finish_with_message(format!("Downloaded {}", self.name));
         Ok(fs::canonicalize(&path).unwrap_or_else(|_| path))
     }
+
+    pub fn extract(
+        &self,
+        path: &Path,
+        folder_name: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        println!("Extracting {}...", &self.name);
+
+        let zipfile = std::fs::File::open(&path).unwrap();
+
+        let mut archive = zip::ZipArchive::new(zipfile)
+            .unwrap_or_else(|_| panic!("Failed to open {}.", &self.name));
+
+        let mut extraction_path = path.parent().unwrap().to_path_buf();
+        extraction_path.push(folder_name);
+
+        archive
+            .extract(&extraction_path.to_str().unwrap())
+            .unwrap_or_else(|_| panic!("Failed to extract archive {}.", &self.name));
+
+        println!("Extracted {} to {:#?}.\n", &self.name, extraction_path);
+
+        Ok(())
+    }
 }
