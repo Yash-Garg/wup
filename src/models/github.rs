@@ -16,7 +16,7 @@ pub struct GithubRelease {
     pub assets: Vec<GithubReleaseAsset>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct GithubReleaseAsset {
     #[serde(alias = "id")]
     pub asset_id: u64,

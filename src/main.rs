@@ -11,7 +11,10 @@ use reqwest::header;
 use color_eyre::eyre::Result;
 use constants::APP_USER_AGENT;
 
-use crate::models::{config::CliConfig, github::GithubReleaseAsset};
+use crate::{
+    constants::{INVALID_ARCH_OS, VALID_ARCH, VALID_OS},
+    models::{config::CliConfig, github::GithubReleaseAsset},
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -44,16 +47,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         for asset in result.assets {
             let asset_name = asset.name.to_lowercase();
 
-            if (asset_name.contains("windows")
-                || asset_name.contains(".exe")
-                || asset_name.contains(".msi"))
-                && (asset_name.contains("64")
-                    || asset_name.contains("x64")
-                    || asset_name.contains("x86_64"))
-                && !asset_name.contains("arm")
-            {
-                filtered_assets.push(asset);
-            }
+            filtered_assets.extend(VALID_OS.iter().flat_map(|os| {
+                VALID_ARCH.iter().flat_map(|arch| {
+                    INVALID_ARCH_OS
+                        .iter()
+                        .filter(|key| {
+                            asset_name.contains(*os)
+                                && asset_name.contains(*arch)
+                                && !asset_name.contains(*key)
+                        })
+                        .map(|_| asset.clone())
+                })
+            }));
         }
 
         if !filtered_assets.is_empty() {
@@ -62,7 +67,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .find(|asset| asset.name.contains("msvc"))
                 .unwrap_or_else(|| filtered_assets.first().unwrap());
 
-            asset.download(&client).await?;
+            asset.download(&client).await.unwrap_or_else(|_| {
+                panic!(
+                    "Failed to download asset {} for {}/{}",
+                    asset.name, repo.owner, repo.name
+                )
+            });
+        } else {
+            eprintln!("No assets found for {}", repo.name);
         }
     }
 
