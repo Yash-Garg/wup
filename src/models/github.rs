@@ -14,6 +14,7 @@ use reqwest::Client;
 pub struct GithubRelease {
     #[serde(alias = "id")]
     pub release_id: u64,
+    pub node_id: String,
     #[serde(alias = "tag_name")]
     pub tag: String,
     pub name: String,
@@ -87,7 +88,7 @@ impl GithubReleaseAsset {
 
     pub fn extract(
         &self,
-        path: &Path,
+        path: PathBuf,
         folder_name: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         println!("Extracting {}...", &self.name);
@@ -97,14 +98,45 @@ impl GithubReleaseAsset {
         let mut archive = zip::ZipArchive::new(zipfile)
             .unwrap_or_else(|_| panic!("Failed to open {}.", &self.name));
 
+        let mut subfolder = false;
+        for i in 0..archive.len() {
+            let file = archive.by_index(i).unwrap();
+            if file.is_dir() {
+                subfolder = true;
+                break;
+            }
+        }
+
         let mut extraction_path = path.parent().unwrap().to_path_buf();
-        extraction_path.push(folder_name);
+        if !subfolder {
+            extraction_path.push(folder_name);
+        }
 
         archive
             .extract(&extraction_path.to_str().unwrap())
             .unwrap_or_else(|_| panic!("Failed to extract archive {}.", &self.name));
 
         println!("Extracted {} to {:#?}.\n", &self.name, extraction_path);
+
+        let mut extracted_path = extraction_path.clone();
+        extracted_path.push(&self.name[..self.name.len() - 4]);
+
+        let mut subfolder_path = extraction_path.clone();
+        subfolder_path.push(&folder_name);
+
+        if subfolder {
+            std::fs::rename(&extracted_path, &subfolder_path).unwrap_or_else(|_| {
+                panic!(
+                    "Failed to rename {} to {}.",
+                    extracted_path.to_str().unwrap(),
+                    subfolder_path.to_str().unwrap()
+                );
+            });
+        }
+
+        std::fs::remove_file(&path).unwrap_or_else(|_| {
+            panic!("Failed to remove {}.", path.to_str().unwrap());
+        });
 
         Ok(())
     }

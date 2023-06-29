@@ -75,7 +75,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             });
 
             if asset.name.ends_with(".zip") {
-                asset.extract(&file_path, &repo.name)?;
+                asset.extract(file_path, &repo.name)?;
             } else if asset.name.ends_with(".exe") {
                 asset.move_dir(file_path, &repo.name)?;
             }
