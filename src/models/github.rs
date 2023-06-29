@@ -108,4 +108,32 @@ impl GithubReleaseAsset {
 
         Ok(())
     }
+
+    pub fn move_dir(
+        &self,
+        path: PathBuf,
+        folder_name: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut new_path = path.clone();
+        new_path.pop();
+        new_path.push(&folder_name);
+        new_path.push(&self.name);
+
+        std::fs::create_dir_all(new_path.parent().unwrap()).unwrap_or_else(|_| {
+            panic!(
+                "Failed to create directory {}.",
+                new_path.parent().unwrap().to_str().unwrap()
+            );
+        });
+
+        std::fs::rename(&path, &new_path).unwrap_or_else(|_| {
+            panic!(
+                "Failed to move {} to {}.",
+                path.to_str().unwrap(),
+                new_path.to_str().unwrap()
+            );
+        });
+
+        Ok(())
+    }
 }
