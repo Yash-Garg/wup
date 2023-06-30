@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::constants::API_BASE_URL;
+use crate::constants::{API_BASE_URL, VERSION_STORE};
 
 use super::github::GithubRelease;
 
@@ -14,6 +14,43 @@ pub struct RepoConfig {
     pub owner: String,
     pub name: String,
     pub force_tag: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VersionStore {
+    pub repo_name: String,
+    pub release_id: u64,
+    pub node_id: String,
+    pub tag: String,
+}
+
+impl VersionStore {
+    pub fn new(release: GithubRelease, repo: &RepoConfig) -> Self {
+        Self {
+            repo_name: format!("{}/{}", repo.owner, repo.name),
+            release_id: release.release_id,
+            node_id: release.node_id,
+            tag: release.tag,
+        }
+    }
+
+    pub fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let mut versions = VersionStore::read().unwrap_or_else(|_| vec![]);
+        versions.push(self.clone());
+
+        let file = std::fs::File::create(VERSION_STORE)?;
+        let writer = std::io::BufWriter::new(file);
+        serde_json::to_writer_pretty(writer, &versions)?;
+
+        Ok(())
+    }
+
+    pub fn read() -> Result<Vec<VersionStore>, Box<dyn std::error::Error>> {
+        let file = std::fs::File::open(VERSION_STORE)?;
+        let reader = std::io::BufReader::new(file);
+        let versions: Vec<VersionStore> = serde_json::from_reader(reader)?;
+        Ok(versions)
+    }
 }
 
 impl RepoConfig {

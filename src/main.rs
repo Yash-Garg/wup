@@ -12,8 +12,11 @@ use color_eyre::eyre::Result;
 use constants::APP_USER_AGENT;
 
 use crate::{
-    constants::{INVALID_ARCH_OS, VALID_ARCH, VALID_OS},
-    models::{config::CliConfig, github::GithubReleaseAsset},
+    constants::{CLI_CONFIG, INVALID_ARCH_OS, VALID_ARCH, VALID_OS},
+    models::{
+        config::{CliConfig, VersionStore},
+        github::GithubReleaseAsset,
+    },
 };
 
 #[tokio::main]
@@ -21,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     color_eyre::install()?;
 
     let config: CliConfig = Figment::new()
-        .merge(Yaml::file("config.yml"))
+        .merge(Yaml::file(CLI_CONFIG))
         .extract()
         .unwrap_or_else(|_| {
             panic!("Failed to load config.yml. Please make sure it exists and is valid YAML.");
@@ -44,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let result = repo.fetch_latest_release(&client).await?;
         let mut filtered_assets = Vec::<GithubReleaseAsset>::new();
 
-        for asset in result.assets {
+        for asset in &result.assets {
             let asset_name = asset.name.to_lowercase();
 
             filtered_assets.extend(VALID_OS.iter().flat_map(|os| {
@@ -79,6 +82,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             } else if asset.name.ends_with(".exe") {
                 asset.move_dir(file_path, &repo.name)?;
             }
+
+            let vstore = VersionStore::new(result, &repo);
+            vstore.write()?;
         } else {
             eprintln!("No assets found for {}", repo.name);
         }
