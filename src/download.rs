@@ -108,8 +108,6 @@ async fn get_asset_and_store(
                 let mut path = file_path.parent().unwrap().to_path_buf();
                 path.push(&repo.name);
 
-                dbg!(path.clone());
-
                 println!(
                     "\nUpdating {} from {} to {}\n",
                     repo.name, v.tag, release.tag
