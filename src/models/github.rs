@@ -102,7 +102,7 @@ impl GithubReleaseAsset {
         let mut subfolder = false;
         for i in 0..archive.len() {
             let file = archive.by_index(i).unwrap();
-            if file.is_dir() {
+            if file.name().contains("/") {
                 subfolder = true;
                 break;
             }

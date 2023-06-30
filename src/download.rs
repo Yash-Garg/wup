@@ -144,7 +144,7 @@ async fn get_asset_and_store(
                 if cfg!(windows) {
                     let mut path_env = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
                     path_env.push_str(&format!(";{}", path.to_str().unwrap()));
-                    std::env::set_var("PATH", path_env);
+                    std::env::set_var("PATH", &path_env);
                 }
             }
             None => {}
