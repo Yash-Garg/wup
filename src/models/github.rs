@@ -91,7 +91,7 @@ impl GithubReleaseAsset {
         &self,
         path: &PathBuf,
         folder_name: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
         println!("Extracting {}...", &self.name);
 
         let zipfile = std::fs::File::open(&path).unwrap();
@@ -139,14 +139,14 @@ impl GithubReleaseAsset {
             panic!("Failed to remove {}.", path.to_str().unwrap());
         });
 
-        Ok(())
+        Ok(subfolder_path)
     }
 
     pub fn move_dir(
         &self,
         path: &PathBuf,
         folder_name: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
         let mut new_path = path.clone();
         new_path.pop();
         new_path.push(&folder_name);
@@ -167,7 +167,7 @@ impl GithubReleaseAsset {
             );
         });
 
-        Ok(())
+        Ok(new_path)
     }
 
     pub fn delete_dir(&self, path: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {

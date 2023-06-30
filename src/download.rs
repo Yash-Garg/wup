@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use color_eyre::eyre::Result;
 use reqwest::header;
 
@@ -126,10 +128,26 @@ async fn get_asset_and_store(
             }
         }
 
-        if asset.name.ends_with(".zip") {
-            asset.extract(&file_path, &repo.name)?;
+        let final_path: Option<PathBuf> = if asset.name.ends_with(".zip") {
+            Some(asset.extract(&file_path, &repo.name)?)
+        } else if asset.name.ends_with(".tar.gz") {
+            // TODO: Implement tar.gz extraction
+            None
         } else if asset.name.ends_with(".exe") {
-            asset.move_dir(&file_path, &repo.name)?;
+            Some(asset.move_dir(&file_path, &repo.name)?)
+        } else {
+            None
+        };
+
+        match final_path {
+            Some(path) => {
+                if cfg!(windows) {
+                    let mut path_env = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
+                    path_env.push_str(&format!(";{}", path.to_str().unwrap()));
+                    std::env::set_var("PATH", path_env);
+                }
+            }
+            None => {}
         }
     } else {
         eprintln!("No assets found for {}", repo.name);
