@@ -34,13 +34,19 @@ impl VersionStore {
         }
     }
 
+    fn create_file(versions: Vec<VersionStore>) -> Result<(), Box<dyn std::error::Error>> {
+        let file = std::fs::File::create(VERSION_STORE)?;
+        let writer = std::io::BufWriter::new(file);
+        serde_json::to_writer_pretty(writer, &versions)?;
+
+        Ok(())
+    }
+
     pub fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
         let mut versions = VersionStore::read()?;
         versions.push(self.clone());
 
-        let file = std::fs::File::create(VERSION_STORE)?;
-        let writer = std::io::BufWriter::new(file);
-        serde_json::to_writer_pretty(writer, &versions)?;
+        Self::create_file(versions)?;
 
         Ok(())
     }
@@ -64,6 +70,19 @@ impl VersionStore {
         let versions = VersionStore::read()?;
         let version = versions.into_iter().find(|v| v.repo_name == repo_name);
         Ok(version)
+    }
+
+    pub fn replace(&self, new_version: VersionStore) -> Result<(), Box<dyn std::error::Error>> {
+        let mut versions = VersionStore::read()?;
+        let index = versions
+            .iter()
+            .position(|v| v.repo_name == self.repo_name)
+            .unwrap();
+        versions[index] = new_version;
+
+        Self::create_file(versions)?;
+
+        Ok(())
     }
 }
 

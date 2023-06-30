@@ -124,6 +124,7 @@ async fn get_asset_and_store(
             )
         });
 
+        let new_vstore = VersionStore::new(release.clone(), &repo);
         match vstore {
             Some(v) => {
                 let mut path = file_path.parent().unwrap().to_path_buf();
@@ -131,7 +132,10 @@ async fn get_asset_and_store(
 
                 dbg!(path.clone());
 
-                println!("Updating {} from {} to {}", repo.name, v.tag, release.tag);
+                println!(
+                    "\nUpdating {} from {} to {}\n",
+                    repo.name, v.tag, release.tag
+                );
                 asset.delete_dir(&path).unwrap_or_else(|_| {
                     panic!(
                         "Failed to delete old asset {} for {}/{}",
@@ -139,10 +143,9 @@ async fn get_asset_and_store(
                     )
                 });
 
-                // TODO: replace in vstore with new tag and id
+                v.replace(new_vstore)?;
             }
             None => {
-                let new_vstore = VersionStore::new(release, &repo);
                 new_vstore.write()?;
             }
         }
