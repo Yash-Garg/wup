@@ -71,17 +71,24 @@ async fn get_asset_and_store(
     repo: &RepoConfig,
     vstore: Option<VersionStore>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let force_tag = match &repo.force_tag {
-        Some(tag) => tag,
-        None => "",
-    };
-
     let needs_update = match &vstore {
-        Some(v) => v.tag != release.tag && v.tag != force_tag,
+        Some(v) => {
+            let is_tag_same = if repo.force_tag.is_some() {
+                &v.tag == repo.force_tag.as_ref().unwrap()
+            } else {
+                false
+            };
+
+            v.tag != release.tag && !is_tag_same
+        }
         None => true,
     };
 
     if !needs_update {
+        println!(
+            "Skipping {} as it is already up to date.",
+            format!("{}/{}", repo.owner, repo.name)
+        );
         return Ok(());
     }
 
@@ -121,6 +128,8 @@ async fn get_asset_and_store(
             Some(v) => {
                 let mut path = file_path.parent().unwrap().to_path_buf();
                 path.push(&repo.name);
+
+                dbg!(path.clone());
 
                 println!("Updating {} from {} to {}", repo.name, v.tag, release.tag);
                 asset.delete_dir(&path).unwrap_or_else(|_| {
