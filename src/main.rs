@@ -4,30 +4,25 @@ mod constants;
 mod download;
 mod models;
 
+use clap::Parser;
+use cli::{Cli, Commands};
 use download::start_update;
-use figment::{
-    providers::{Format, Yaml},
-    Figment,
-};
 
 use color_eyre::eyre::Result;
-use models::config::VersionStore;
-
-use crate::{constants::CLI_CONFIG, models::config::CliConfig};
+use models::config::{CliConfig, VersionStore};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     color_eyre::install()?;
 
-    let matches = cli::cli().get_matches();
-
-    match matches.subcommand() {
-        Some(("config", _)) => {
-            let config = get_config();
+    let cli = Cli::parse();
+    match cli.command {
+        Commands::Config => {
+            let config = CliConfig::get();
             println!("{:#?}", config);
         }
 
-        Some(("vstores", _)) => {
+        Commands::Vstores => {
             let stores = VersionStore::read();
             match &stores {
                 Ok(stores) => {
@@ -44,25 +39,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        Some(("update", _)) => {
-            let config = get_config();
+        Commands::Update => {
+            let config = CliConfig::get();
             start_update(config).await.unwrap_or_else(|e| {
                 println!("Error: {}", e);
             });
         }
-        _ => unreachable!(),
     }
 
     Ok(())
-}
-
-fn get_config() -> CliConfig {
-    let config: CliConfig = Figment::new()
-        .merge(Yaml::file(CLI_CONFIG))
-        .extract()
-        .unwrap_or_else(|_| {
-            panic!("Failed to load config.yml. Please make sure it exists and is valid YAML.");
-        });
-
-    config
 }

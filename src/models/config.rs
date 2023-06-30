@@ -1,6 +1,8 @@
+use figment::providers::Format;
+use figment::{providers::Yaml, Figment};
 use serde::{Deserialize, Serialize};
 
-use crate::constants::{API_BASE_URL, VERSION_STORE};
+use crate::constants::{API_BASE_URL, CLI_CONFIG, VERSION_STORE};
 
 use super::github::GithubRelease;
 
@@ -106,5 +108,18 @@ impl RepoConfig {
         let response: GithubRelease = http_resp.json().await?;
 
         return Ok(response);
+    }
+}
+
+impl CliConfig {
+    pub fn get() -> Self {
+        let config: Self = Figment::new()
+            .merge(Yaml::file(CLI_CONFIG))
+            .extract()
+            .unwrap_or_else(|_| {
+                panic!("Failed to load config.yml. Please make sure it exists and is valid YAML.");
+            });
+
+        config
     }
 }
