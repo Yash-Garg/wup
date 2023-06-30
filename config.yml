@@ -8,9 +8,9 @@ repos:
     name: lsd
   - owner: jqlang
     name: jq
-  # - owner: StackExchange
-  #   name: dnscontrol
-  # - owner: junegunn
-  #   name: fzf
-  # - owner: dandavison
-  #   name: delta
+  - owner: StackExchange
+    name: dnscontrol
+  - owner: junegunn
+    name: fzf
+  - owner: dandavison
+    name: delta

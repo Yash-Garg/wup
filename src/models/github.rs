@@ -88,7 +88,7 @@ impl GithubReleaseAsset {
 
     pub fn extract(
         &self,
-        path: PathBuf,
+        path: &PathBuf,
         folder_name: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         println!("Extracting {}...", &self.name);
@@ -143,7 +143,7 @@ impl GithubReleaseAsset {
 
     pub fn move_dir(
         &self,
-        path: PathBuf,
+        path: &PathBuf,
         folder_name: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut new_path = path.clone();
@@ -164,6 +164,14 @@ impl GithubReleaseAsset {
                 path.to_str().unwrap(),
                 new_path.to_str().unwrap()
             );
+        });
+
+        Ok(())
+    }
+
+    pub fn delete_dir(&self, path: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+        std::fs::remove_dir_all(&path).unwrap_or_else(|_| {
+            panic!("Failed to remove directory {}.", path.to_str().unwrap());
         });
 
         Ok(())
