@@ -32,3 +32,12 @@ jobs:
           use-cross: ${{ matrix.job.use-cross }}
           command: build
           args: --release --target=${{ matrix.job.target }}
+
+      - name: Rename ${{ matrix.job.target }} binary
+        run: mv target/${{ matrix.job.target }}/release/wup.exe target/wup-${{ matrix.job.target }}.exe
+
+      - name: Upload ${{ matrix.job.target }} binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: wup-${{ matrix.job.target }}.exe
+          path: target/wup-${{ matrix.job.target }}.exe
