@@ -2,5 +2,5 @@
 .direnv/
 .devenv/
 .vscode/
-downloads/
+bin/
 .vstore.json

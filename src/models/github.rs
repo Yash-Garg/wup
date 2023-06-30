@@ -35,8 +35,7 @@ pub struct GithubReleaseAsset {
 
 impl GithubReleaseAsset {
     pub async fn download(&self, client: &Client) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        let download_path =
-            Path::new(&std::env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("downloads");
+        let download_path = Path::new(&std::env::current_dir().unwrap()).join("bin");
 
         let response = client
             .get(&self.download_url)
@@ -56,7 +55,7 @@ impl GithubReleaseAsset {
         pb.set_message(format!("Downloading {}", self.name));
 
         if !download_path.exists() {
-            std::fs::create_dir("downloads")?;
+            std::fs::create_dir(&download_path)?;
         }
 
         let path = download_path.join(&self.name);
