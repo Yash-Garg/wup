@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = { version = "4.3.10", features = ["derive"] }
 color-eyre = "0.6.2"
 futures-util = "0.3"
 figment = { version = "0.10.10", features = ["yaml"] }
