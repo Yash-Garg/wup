@@ -102,7 +102,7 @@ impl GithubReleaseAsset {
         let mut subfolder = false;
         for i in 0..archive.len() {
             let file = archive.by_index(i).unwrap();
-            if file.name().contains("/") {
+            if file.name().contains(&self.name[..self.name.len() - 4]) {
                 subfolder = true;
                 break;
             }
@@ -139,7 +139,11 @@ impl GithubReleaseAsset {
             panic!("Failed to remove {}.", path.to_str().unwrap());
         });
 
-        Ok(subfolder_path)
+        if subfolder {
+            Ok(subfolder_path)
+        } else {
+            Ok(extraction_path)
+        }
     }
 
     pub fn move_dir(
@@ -167,7 +171,7 @@ impl GithubReleaseAsset {
             );
         });
 
-        Ok(new_path)
+        Ok(new_path.parent().unwrap().to_path_buf())
     }
 
     pub fn delete_dir(&self, path: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {

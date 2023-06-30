@@ -3,7 +3,6 @@ repos:
     name: fd
   - owner: sharkdp
     name: bat
-    force_tag: v0.22.1
   - owner: lsd-rs
     name: lsd
   - owner: jqlang
@@ -14,3 +13,5 @@ repos:
     name: fzf
   - owner: dandavison
     name: delta
+  - owner: Genymobile
+    name: scrcpy

@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use color_eyre::eyre::Result;
 use reqwest::header;
+use winreg::{enums::HKEY_CURRENT_USER, RegKey};
 
 use crate::{
     constants::{APP_USER_AGENT, INVALID_ARCH_OS, VALID_ARCH, VALID_OS},
@@ -85,6 +86,8 @@ async fn get_asset_and_store(
                         asset_name.contains(*os)
                             && asset_name.contains(*arch)
                             && !asset_name.contains(*key)
+                            || asset_name.contains("win64")
+                            || asset_name.contains("win-64")
                     })
                     .map(|_| asset.clone())
             })
@@ -142,9 +145,24 @@ async fn get_asset_and_store(
         match final_path {
             Some(path) => {
                 if cfg!(windows) {
-                    let mut path_env = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
-                    path_env.push_str(&format!(";{}", path.to_str().unwrap()));
-                    std::env::set_var("PATH", &path_env);
+                    println!("Adding {} entry to PATH.\n", &repo.name);
+
+                    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+                    let (env, _) = hkcu.create_subkey("Environment").unwrap();
+
+                    let current_path = env
+                        .get_value::<String, _>("PATH")
+                        .unwrap_or_else(|_| "".to_string());
+
+                    if current_path.is_empty() {
+                        env.set_value("PATH", &path.to_str().unwrap())?;
+                        return Ok(());
+                    } else if current_path.contains(&asset.name) {
+                        return Ok(());
+                    } else {
+                        let new_path = format!("{};{}", current_path, path.to_str().unwrap());
+                        env.set_value("PATH", &new_path)?;
+                    }
                 }
             }
             None => {}
