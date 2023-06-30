@@ -37,7 +37,11 @@ impl VersionStore {
     }
 
     fn create_file(versions: Vec<VersionStore>) -> Result<(), Box<dyn std::error::Error>> {
-        let file = std::fs::File::create(VERSION_STORE)?;
+        let mut path = std::env::current_exe().unwrap();
+        path.pop();
+        path.push(VERSION_STORE);
+
+        let file = std::fs::File::create(&path)?;
         let writer = std::io::BufWriter::new(file);
         serde_json::to_writer_pretty(writer, &versions)?;
 
@@ -54,8 +58,12 @@ impl VersionStore {
     }
 
     pub fn read() -> Result<Vec<VersionStore>, Box<dyn std::error::Error>> {
-        let file = std::fs::File::open(VERSION_STORE).unwrap_or_else(|_| {
-            std::fs::File::create(VERSION_STORE).unwrap_or_else(|_| {
+        let mut path = std::env::current_exe().unwrap();
+        path.pop();
+        path.push(VERSION_STORE);
+
+        let file = std::fs::File::open(&path).unwrap_or_else(|_| {
+            std::fs::File::create(&path).unwrap_or_else(|_| {
                 panic!(
                     "Failed to create {} file. Please make sure you have write permissions.",
                     VERSION_STORE
@@ -113,8 +121,12 @@ impl RepoConfig {
 
 impl CliConfig {
     pub fn get() -> Self {
+        let mut path = std::env::current_exe().unwrap();
+        path.pop();
+        path.push(CLI_CONFIG);
+
         let config: Self = Figment::new()
-            .merge(Yaml::file(CLI_CONFIG))
+            .merge(Yaml::file(&path))
             .extract()
             .unwrap_or_else(|_| {
                 panic!("Failed to load config.yml. Please make sure it exists and is valid YAML.");

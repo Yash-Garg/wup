@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use color_eyre::eyre::Result;
 use reqwest::header;
+#[cfg(target_os = "windows")]
 use winreg::{enums::HKEY_CURRENT_USER, RegKey};
 
 use crate::{
@@ -131,7 +132,7 @@ async fn get_asset_and_store(
             }
         }
 
-        let final_path: Option<PathBuf> = if asset.name.ends_with(".zip") {
+        let _final_path: Option<PathBuf> = if asset.name.ends_with(".zip") {
             Some(asset.extract(&file_path, &repo.name)?)
         } else if asset.name.ends_with(".tar.gz") {
             // TODO: Implement tar.gz extraction
@@ -142,7 +143,8 @@ async fn get_asset_and_store(
             None
         };
 
-        match final_path {
+        #[cfg(target_os = "windows")]
+        match _final_path {
             Some(path) => {
                 if cfg!(windows) {
                     println!("Adding {} entry to PATH.\n", &repo.name);

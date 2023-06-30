@@ -35,7 +35,9 @@ pub struct GithubReleaseAsset {
 
 impl GithubReleaseAsset {
     pub async fn download(&self, client: &Client) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        let download_path = Path::new(&std::env::current_dir().unwrap()).join("bin");
+        let mut download_path = std::env::current_exe()?;
+        download_path.pop();
+        download_path.push("bin");
 
         let response = client
             .get(&self.download_url)
@@ -100,6 +102,7 @@ impl GithubReleaseAsset {
             .unwrap_or_else(|_| panic!("Failed to open {}.", &self.name));
 
         let mut subfolder = false;
+        // TODO: This is a hacky way to check if the archive contains a subfolder.
         for i in 0..archive.len() {
             let file = archive.by_index(i).unwrap();
             if file.name().contains(&self.name[..self.name.len() - 4]) {
