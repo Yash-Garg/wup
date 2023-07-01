@@ -41,10 +41,34 @@ async fn main() -> Result<()> {
 
         Commands::Update => {
             let config = CliConfig::get();
+            #[cfg(target_os = "windows")]
+            set_path().unwrap_or_else(|e| {
+                println!("Error: {}", e);
+            });
+
             start_update(config).await.unwrap_or_else(|e| {
                 println!("Error: {}", e);
             });
         }
+    }
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn set_path() -> Result<(), Box<dyn std::error::Error>> {
+    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
+
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let (env, _) = hkcu.create_subkey("Environment").unwrap();
+
+    let current_path = env
+        .get_value::<String, _>("PATH")
+        .unwrap_or_else(|_| "".to_string());
+
+    if !current_path.contains("WUP_PATH") {
+        let new_path = format!("{};{}", current_path, "%WUP_PATH%");
+        env.set_value("PATH", &new_path)?;
     }
 
     Ok(())

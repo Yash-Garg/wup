@@ -153,17 +153,17 @@ async fn get_asset_and_store(
                     let (env, _) = hkcu.create_subkey("Environment").unwrap();
 
                     let current_path = env
-                        .get_value::<String, _>("PATH")
+                        .get_value::<String, _>("WUP_PATH")
                         .unwrap_or_else(|_| "".to_string());
 
                     if current_path.is_empty() {
-                        env.set_value("PATH", &path.to_str().unwrap())?;
+                        env.set_value("WUP_PATH", &path.to_str().unwrap())?;
                         return Ok(());
                     } else if current_path.contains(&asset.name) {
                         return Ok(());
                     } else {
                         let new_path = format!("{};{}", current_path, path.to_str().unwrap());
-                        env.set_value("PATH", &new_path)?;
+                        env.set_value("WUP_PATH", &new_path)?;
                     }
                 }
             }
