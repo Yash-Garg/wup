@@ -101,11 +101,16 @@ impl GithubReleaseAsset {
         let mut archive = zip::ZipArchive::new(zipfile)
             .unwrap_or_else(|_| panic!("Failed to open {}.", &self.name));
 
-        let mut subfolder = false;
         // TODO: This is a hacky way to check if the archive contains a subfolder.
+        let mut subfolder = false;
+        let mut subfolder_name = self.name[..self.name.len() - 4].to_string();
         for i in 0..archive.len() {
             let file = archive.by_index(i).unwrap();
             if file.name().contains(&self.name[..self.name.len() - 4]) {
+                subfolder = true;
+                break;
+            } else if file.is_dir() {
+                subfolder_name = file.name().to_string();
                 subfolder = true;
                 break;
             }
@@ -123,7 +128,7 @@ impl GithubReleaseAsset {
         println!("Extracted {} to {:#?}.\n", &self.name, extraction_path);
 
         let mut extracted_path = extraction_path.clone();
-        extracted_path.push(&self.name[..self.name.len() - 4]);
+        extracted_path.push(subfolder_name);
 
         let mut subfolder_path = extraction_path.clone();
         subfolder_path.push(&folder_name);
