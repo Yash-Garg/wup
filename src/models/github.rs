@@ -3,7 +3,7 @@ use std::{
     cmp::min,
     fs::{self, File},
     io::Write,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use futures_util::StreamExt;

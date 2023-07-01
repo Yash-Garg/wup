@@ -21,7 +21,10 @@
             rustc --version
           '';
 
-          packages = [pkgs.openssl];
+          packages = [
+            pkgs.pkg-config
+            pkgs.libressl
+          ];
 
           languages.rust.enable = true;
         })
