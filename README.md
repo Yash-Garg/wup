@@ -1,6 +1,8 @@
-# wup
+# wup [![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 
 A simple command line tool to manage version of other command line tools made for Windows.
+
+This is just a fun side project to build something like [Scoop](https://scoop.sh), use this at your own risk!
 
 # Installation
 
